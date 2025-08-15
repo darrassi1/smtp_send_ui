@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { QuillModule } from 'ngx-quill';
 import { CommonModule } from '@angular/common';
+import { HtmlPreviewModalComponent } from './components/html-preview-modal/html-preview-modal.component';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -25,6 +26,7 @@ import { AuthInterceptor } from './services/auth.interceptor';
     SettingsComponent,
     AdminLoginComponent,
     ToastComponent,
+    HtmlPreviewModalComponent,
     HtmlEditorComponent
   ],
   imports: [

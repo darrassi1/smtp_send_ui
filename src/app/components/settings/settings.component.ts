@@ -23,7 +23,7 @@ export class SettingsComponent implements OnInit {
   ) {
     this.smtpForm = this.fb.group({
       host: ['', Validators.required],
-      port: [587, [Validators.required, Validators.min(1), Validators.max(65535)]],
+      port: [465, [Validators.required, Validators.min(1), Validators.max(65535)]],
       secure: [false],
       auth: this.fb.group({
         user: ['', Validators.required],

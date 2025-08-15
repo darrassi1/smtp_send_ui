@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EmailService } from '../../services/email.service';
 import { AttachmentService } from '../../services/attachment.service';
@@ -9,12 +9,14 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-compose',
   templateUrl: './compose.component.html'
 })
-export class ComposeComponent implements OnInit {
+export class ComposeComponent implements OnInit{
   emailForm: FormGroup;
   attachments: Attachment[] = [];
   isLoading = false;
   draftId: string | null = null;
   isCodeBlockMode = false; // New property for code block checkbox
+  showPreview = false;
+previewHtml = '';
 
   constructor(
     private fb: FormBuilder,
@@ -27,6 +29,7 @@ export class ComposeComponent implements OnInit {
       cc: [''],
       bcc: [''],
       subject: ['', Validators.required],
+      senderName: [''], // Add sender name field
       html: ['', Validators.required]
     });
   }
@@ -39,30 +42,86 @@ export class ComposeComponent implements OnInit {
       }
     });
   }
-
-  loadDraft(id: string): void {
-    this.isLoading = true;
-    this.emailService.getDrafts().subscribe({
-      next: (drafts) => {
-        const draft = drafts.find(d => d.id === id);
-        if (draft) {
-          this.draftId = id;
-          this.emailForm.patchValue({
-            to: draft.to,
-            cc: draft.cc || '',
-            bcc: draft.bcc || '',
-            subject: draft.subject,
-            html: draft.html
-          });
-          this.attachments = draft.attachments || [];
-        }
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+previewEmail(): void {
+  if (this.emailForm.invalid) {
+    this.emailForm.markAllAsTouched();
+    return;
   }
+
+  // Generate the HTML preview using the same logic as when sending
+  const email = this.prepareEmail();
+
+  // Format the HTML for preview
+  this.previewHtml = this.formatHtmlForPreview(email.html);
+
+  // Show the preview modal
+  this.showPreview = true;
+}
+
+closePreview(): void {
+  this.showPreview = false;
+  this.previewHtml = '';
+}
+
+formatHtmlForPreview(html: string): string {
+  let formattedHtml = html;
+
+  // If using code block mode, process the HTML appropriately
+  if (html) {
+    // Extract from Quill formatting if needed
+    if (html.includes('ql-code-block-container')) {
+      const matches = html.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
+      if (matches && matches[1]) {
+        formattedHtml = matches[1];
+      }
+
+      // Remove Quill wrappers
+      formattedHtml = formattedHtml
+        .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
+        .replace(/<\/div>/g, '');
+    }
+
+    // For code block mode, convert HTML entities if needed
+    if (formattedHtml.includes('&lt;')) {
+      formattedHtml = formattedHtml
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&amp;/g, '&');
+    }
+  }
+  // Regular content (not code block)
+  else if (formattedHtml && !formattedHtml.startsWith('<')) {
+    formattedHtml = `<p>${formattedHtml.replace(/\n/g, '<br>')}</p>`;
+  }
+
+  return `${formattedHtml}`;
+}
+loadDraft(id: string): void {
+  this.isLoading = true;
+  this.emailService.getDrafts().subscribe({
+    next: (drafts) => {
+      const draft = drafts.find(d => d.id === id);
+      if (draft) {
+        this.draftId = id;
+        this.emailForm.patchValue({
+          to: draft.to,
+          cc: draft.cc || '',
+          bcc: draft.bcc || '',
+          subject: draft.subject,
+          senderName: draft.senderName || '', // Load sender name
+          html: draft.html
+        });
+        this.attachments = draft.attachments || [];
+      }
+      this.isLoading = false;
+    },
+    error: () => {
+      this.isLoading = false;
+    }
+  });
+}
 
   onFileSelected(event: Event): void {
     const element = event.target as HTMLInputElement;
@@ -156,6 +215,7 @@ prepareEmail(): Draft {
     cc: this.emailForm.get('cc')?.value,
     bcc: this.emailForm.get('bcc')?.value,
     subject: this.emailForm.get('subject')?.value,
+    senderName: this.emailForm.get('senderName')?.value, // Include sender name
     html: this.emailForm.get('html')?.value,
     attachments: this.attachments,
     id: this.draftId || undefined

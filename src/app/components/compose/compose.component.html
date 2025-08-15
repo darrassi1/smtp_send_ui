@@ -60,6 +60,20 @@
           Subject is required
         </p>
       </div>
+      <!-- Add this field after the Subject field -->
+<div>
+  <label for="senderName" class="label">Sender Name:</label>
+  <input
+    id="senderName"
+    type="text"
+    formControlName="senderName"
+    class="input w-full"
+    placeholder="Your Name (or Company Name)"
+  >
+  <p class="text-sm text-gray-500 mt-1">
+    Special characters are allowed (e.g., John Doe @ Company Inc.)
+  </p>
+</div>
 
       <!-- HTML Editor -->
       <div>
@@ -129,26 +143,54 @@
       </div>
 
       <!-- Action buttons -->
-      <div class="flex justify-between pt-4">
-        <button
-          type="button"
-          (click)="onSaveDraft()"
-          class="btn btn-secondary"
-          [disabled]="isLoading"
-        >
-          <span *ngIf="!isLoading">Save Draft</span>
-          <span *ngIf="isLoading">Saving...</span>
-        </button>
-        <button
-          type="button"
-          (click)="onSendEmail()"
-          class="btn btn-primary"
-          [disabled]="emailForm.invalid || isLoading"
-        >
-          <span *ngIf="!isLoading">Send Email</span>
-          <span *ngIf="isLoading">Sending...</span>
-        </button>
-      </div>
+<!-- Add this button in the action buttons section -->
+<div class="flex justify-between pt-4">
+  <!-- Left side buttons -->
+  <div class="space-x-2">
+    <button
+      type="button"
+      (click)="onSaveDraft()"
+      class="btn btn-secondary"
+      [disabled]="isLoading"
+    >
+      <span *ngIf="!isLoading">Save Draft</span>
+      <span *ngIf="isLoading">Saving...</span>
+    </button>
+
+    <!-- New Preview Button -->
+    <button
+      type="button"
+      (click)="previewEmail()"
+      class="btn btn-outline-primary"
+      [disabled]="emailForm.invalid || isLoading"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      Preview
+    </button>
+  </div>
+
+  <!-- Send button -->
+  <button
+    type="button"
+    (click)="onSendEmail()"
+    class="btn btn-primary"
+    [disabled]="emailForm.invalid || isLoading"
+  >
+    <span *ngIf="!isLoading">Send Email</span>
+    <span *ngIf="isLoading">Sending...</span>
+  </button>
+</div>
+
+<!-- Add preview modal (conditionally displayed) -->
+<app-html-preview-modal
+  *ngIf="showPreview"
+  [html]="previewHtml"
+  [subject]="emailForm.get('subject')?.value"
+  (close)="closePreview()"
+></app-html-preview-modal>
     </form>
   </div>
 </div>

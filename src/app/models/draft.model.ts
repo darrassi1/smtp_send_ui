@@ -4,6 +4,7 @@ export interface Draft {
   cc?: string;
   bcc?: string;
   subject: string;
+  senderName?: string;
   html: string;
   attachments?: Attachment[];
   createdAt?: Date;
