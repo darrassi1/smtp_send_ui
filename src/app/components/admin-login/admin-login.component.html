@@ -1,0 +1,39 @@
+<div class="bg-white p-6 rounded-lg shadow-md">
+  <h2 class="text-lg font-medium mb-4">Admin Login</h2>
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+    <div>
+      <label for="username" class="label">Username</label>
+      <input
+        id="username"
+        type="text"
+        formControlName="username"
+        class="input w-full"
+        placeholder="Enter admin username"
+      >
+      <p *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
+         class="text-red-500 text-sm mt-1">
+        Username is required
+      </p>
+    </div>
+
+    <div>
+      <label for="password" class="label">Password</label>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        class="input w-full"
+        placeholder="Enter admin password"
+      >
+      <p *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+         class="text-red-500 text-sm mt-1">
+        Password is required
+      </p>
+    </div>
+
+    <button type="submit" [disabled]="loginForm.invalid"
+            class="btn btn-primary w-full" [ngClass]="{'opacity-50 cursor-not-allowed': loginForm.invalid}">
+      Login
+    </button>
+  </form>
+</div>

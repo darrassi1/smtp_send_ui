@@ -1,0 +1,137 @@
+<div class="max-w-4xl mx-auto mt-8 bg-white rounded-lg shadow-md overflow-hidden">
+  <div class="px-6 py-4 bg-primary-600 text-white">
+    <h2 class="text-xl font-semibold">Compose Email</h2>
+  </div>
+
+  <div class="p-6">
+    <form [formGroup]="emailForm" class="space-y-4">
+      <!-- To field -->
+      <div>
+        <label for="to" class="label">To:</label>
+        <input
+          id="to"
+          type="email"
+          formControlName="to"
+          class="input w-full"
+          placeholder="recipient@example.com"
+        >
+        <p *ngIf="emailForm.get('to')?.invalid && emailForm.get('to')?.touched"
+           class="text-red-500 text-sm mt-1">
+          Valid email address is required
+        </p>
+      </div>
+
+      <!-- CC field -->
+      <div>
+        <label for="cc" class="label">CC:</label>
+        <input
+          id="cc"
+          type="text"
+          formControlName="cc"
+          class="input w-full"
+          placeholder="cc@example.com"
+        >
+      </div>
+
+      <!-- BCC field -->
+      <div>
+        <label for="bcc" class="label">BCC:</label>
+        <input
+          id="bcc"
+          type="text"
+          formControlName="bcc"
+          class="input w-full"
+          placeholder="bcc@example.com"
+        >
+      </div>
+
+      <!-- Subject field -->
+      <div>
+        <label for="subject" class="label">Subject:</label>
+        <input
+          id="subject"
+          type="text"
+          formControlName="subject"
+          class="input w-full"
+          placeholder="Email subject"
+        >
+        <p *ngIf="emailForm.get('subject')?.invalid && emailForm.get('subject')?.touched"
+           class="text-red-500 text-sm mt-1">
+          Subject is required
+        </p>
+      </div>
+
+      <!-- HTML Editor -->
+      <div>
+        <label class="label">Email Content:</label>
+        <app-html-editor
+          [content]="emailForm.get('html')?.value"
+          (contentChange)="emailForm.get('html')?.setValue($event)"
+        ></app-html-editor>
+        <p *ngIf="emailForm.get('html')?.invalid && emailForm.get('html')?.touched"
+           class="text-red-500 text-sm mt-1">
+          Email content is required
+        </p>
+      </div>
+
+      <!-- Attachments -->
+      <div>
+        <label class="label">Attachments:</label>
+        <div class="flex items-center space-x-2">
+          <input
+            type="file"
+            id="fileUpload"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          >
+          <label
+            for="fileUpload"
+            class="btn btn-secondary cursor-pointer flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+            Add Attachment
+          </label>
+        </div>
+
+        <div *ngIf="attachments.length > 0" class="mt-2 space-y-1">
+          <div *ngFor="let attachment of attachments" class="flex items-center justify-between p-2 bg-gray-50 rounded">
+            <span class="text-sm">{{ attachment.originalname }}</span>
+            <button
+              type="button"
+              (click)="removeAttachment(attachment.filename)"
+              class="text-red-500 hover:text-red-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex justify-between pt-4">
+        <button
+          type="button"
+          (click)="onSaveDraft()"
+          class="btn btn-secondary"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">Save Draft</span>
+          <span *ngIf="isLoading">Saving...</span>
+        </button>
+        <button
+          type="button"
+          (click)="onSendEmail()"
+          class="btn btn-primary"
+          [disabled]="emailForm.invalid || isLoading"
+        >
+          <span *ngIf="!isLoading">Send Email</span>
+          <span *ngIf="isLoading">Sending...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

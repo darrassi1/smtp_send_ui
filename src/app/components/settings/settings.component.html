@@ -1,0 +1,157 @@
+<div class="max-w-4xl mx-auto mt-8">
+  <!-- Admin login section -->
+  <div *ngIf="!(isAdmin$ | async)">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="px-6 py-4 bg-primary-600 text-white">
+        <h2 class="text-xl font-semibold">SMTP Settings</h2>
+      </div>
+      <div class="p-6">
+        <p class="mb-4 text-gray-600">You need admin access to configure SMTP settings.</p>
+        <app-admin-login (loginSuccess)="onAdminLogin()"></app-admin-login>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMTP configuration section -->
+  <div *ngIf="isAdmin$ | async">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="px-6 py-4 bg-primary-600 text-white">
+        <h2 class="text-xl font-semibold">SMTP Configuration</h2>
+      </div>
+      <div class="p-6">
+        <form [formGroup]="smtpForm" (ngSubmit)="onSubmit()" class="space-y-4">
+          <!-- Host -->
+          <div>
+            <label for="host" class="label">SMTP Host</label>
+            <input
+              id="host"
+              type="text"
+              formControlName="host"
+              class="input w-full"
+              placeholder="smtp.example.com"
+            >
+            <p *ngIf="smtpForm.get('host')?.invalid && smtpForm.get('host')?.touched"
+               class="text-red-500 text-sm mt-1">
+              SMTP host is required
+            </p>
+          </div>
+
+          <!-- Port -->
+          <div>
+            <label for="port" class="label">SMTP Port</label>
+            <input
+              id="port"
+              type="number"
+              formControlName="port"
+              class="input w-full"
+              placeholder="587"
+            >
+            <p *ngIf="smtpForm.get('port')?.invalid && smtpForm.get('port')?.touched"
+               class="text-red-500 text-sm mt-1">
+              Valid port number is required (1-65535)
+            </p>
+          </div>
+
+          <!-- Secure -->
+          <div class="flex items-center">
+            <input
+              id="secure"
+              type="checkbox"
+              formControlName="secure"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            >
+            <label for="secure" class="ml-2 block text-sm text-gray-700">
+              Use secure connection (TLS/SSL)
+            </label>
+          </div>
+
+          <!-- From Email -->
+          <div>
+            <label for="from" class="label">From Email Address</label>
+            <input
+              id="from"
+              type="email"
+              formControlName="from"
+              class="input w-full"
+              placeholder="sender@example.com"
+            >
+            <p *ngIf="smtpForm.get('from')?.invalid && smtpForm.get('from')?.touched"
+               class="text-red-500 text-sm mt-1">
+              Valid email address is required
+            </p>
+          </div>
+
+          <div formGroupName="auth" class="space-y-4">
+            <!-- Username -->
+            <div>
+              <label for="username" class="label">SMTP Username</label>
+              <input
+                id="username"
+                type="text"
+                formControlName="user"
+                class="input w-full"
+                placeholder="username"
+              >
+              <p *ngIf="smtpForm.get('auth.user')?.invalid && smtpForm.get('auth.user')?.touched"
+                 class="text-red-500 text-sm mt-1">
+                Username is required
+              </p>
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label for="password" class="label">SMTP Password</label>
+              <div class="relative">
+                <input
+                  id="password"
+                  [type]="showPassword ? 'text' : 'password'"
+                  formControlName="pass"
+                  class="input w-full"
+                  placeholder="password"
+                >
+                <button
+                  type="button"
+                  (click)="togglePasswordVisibility()"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"
+                >
+                  <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                </button>
+              </div>
+              <p *ngIf="smtpForm.get('auth.pass')?.invalid && smtpForm.get('auth.pass')?.touched"
+                 class="text-red-500 text-sm mt-1">
+                Password is required
+              </p>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex justify-between pt-4">
+            <button
+              type="button"
+              (click)="testConnection()"
+              class="btn btn-secondary"
+              [disabled]="smtpForm.invalid || isLoading"
+            >
+              <span *ngIf="!isLoading">Test Connection</span>
+              <span *ngIf="isLoading">Testing...</span>
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="smtpForm.invalid || isLoading"
+            >
+              <span *ngIf="!isLoading">Save Configuration</span>
+              <span *ngIf="isLoading">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
