@@ -1,4 +1,12 @@
-<div class="mb-4">
+<div class="editor-container">
+  <!-- Custom toolbar with additional formatting buttons -->
+  <div class="mb-2 flex items-center space-x-2">
+
+
+
+  </div>
+
+  <!-- Quill editor -->
   <quill-editor
     [(ngModel)]="content"
     (onContentChanged)="onContentChanged($event)"
@@ -7,16 +15,7 @@
     [styles]="{'min-height': '200px'}"
   ></quill-editor>
 
-  <div class="mt-4 flex justify-between items-center">
-    <div class="text-sm text-gray-500">
-      <p>Tip: You can write HTML directly by using the code-block option, or use the formatting toolbar.</p>
-    </div>
-
-    <button
-      type="button"
-      class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded"
-      (click)="insertTimestampAndUser()">
-      Insert Timestamp & User
-    </button>
+  <div class="mt-2 text-sm text-gray-500">
+    <p>Tip: Use the "Format as Code Block" button above to properly format code sections.</p>
   </div>
 </div>

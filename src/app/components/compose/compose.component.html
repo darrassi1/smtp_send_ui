@@ -64,10 +64,27 @@
       <!-- HTML Editor -->
       <div>
         <label class="label">Email Content:</label>
+
+        <!-- Code block checkbox only -->
+        <div class="mb-2 flex justify-end">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="codeBlockMode"
+              class="mr-2 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+              [(ngModel)]="isCodeBlockMode"
+              [ngModelOptions]="{standalone: true}">
+            <label for="codeBlockMode" class="text-sm text-gray-700">
+              Format as Code Block
+            </label>
+          </div>
+        </div>
+
         <app-html-editor
           [content]="emailForm.get('html')?.value"
           (contentChange)="emailForm.get('html')?.setValue($event)"
         ></app-html-editor>
+
         <p *ngIf="emailForm.get('html')?.invalid && emailForm.get('html')?.touched"
            class="text-red-500 text-sm mt-1">
           Email content is required

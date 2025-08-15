@@ -14,6 +14,7 @@ export class ComposeComponent implements OnInit {
   attachments: Attachment[] = [];
   isLoading = false;
   draftId: string | null = null;
+  isCodeBlockMode = false; // New property for code block checkbox
 
   constructor(
     private fb: FormBuilder,
@@ -125,12 +126,9 @@ export class ComposeComponent implements OnInit {
       return;
     }
 
-    const email: Draft = {
-      ...this.emailForm.value,
-      attachments: this.attachments
-    };
-
+    const email = this.prepareEmail();
     this.isLoading = true;
+
     this.emailService.sendEmail(email).subscribe({
       next: () => {
         // Clear form after successful send
@@ -147,5 +145,51 @@ export class ComposeComponent implements OnInit {
     this.emailForm.reset();
     this.attachments = [];
     this.draftId = null;
+    this.isCodeBlockMode = false;
   }
+
+
+
+prepareEmail(): Draft {
+  const email = {
+    to: this.emailForm.get('to')?.value,
+    cc: this.emailForm.get('cc')?.value,
+    bcc: this.emailForm.get('bcc')?.value,
+    subject: this.emailForm.get('subject')?.value,
+    html: this.emailForm.get('html')?.value,
+    attachments: this.attachments,
+    id: this.draftId || undefined
+  };
+
+  // Handle code block formatting if mode is enabled
+  if (this.isCodeBlockMode && email.html) {
+    // For code block mode, we need to extract the HTML from any Quill formatting
+    let htmlContent = email.html;
+
+    // Check if content is wrapped in Quill code block container
+    if (htmlContent.includes('ql-code-block-container')) {
+      // Extract the actual code from the Quill container
+      const matches = htmlContent.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
+      if (matches && matches[1]) {
+        // Use the extracted content directly (do not escape it)
+        htmlContent = matches[1];
+      }
+    }
+
+    // Remove any additional Quill-specific wrappers if present
+    htmlContent = htmlContent
+      .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
+      .replace(/<\/div>/g, '');
+
+    // Set the extracted HTML directly (no escaping)
+    email.html = htmlContent;
+  }
+  // Regular content (not code block mode)
+  else if (email.html && !email.html.startsWith('<')) {
+    // If content doesn't start with HTML tag, wrap it in paragraph tags
+    email.html = `<p>${email.html.replace(/\n/g, '<br>')}</p>`;
+  }
+
+  return email;
+}
 }
