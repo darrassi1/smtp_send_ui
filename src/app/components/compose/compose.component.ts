@@ -1,40 +1,52 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EmailService } from '../../services/email.service';
 import { AttachmentService } from '../../services/attachment.service';
+import { AuthService } from '../../services/auth.service';
 import { Draft, Attachment } from '../../models/draft.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-compose',
   templateUrl: './compose.component.html'
 })
-export class ComposeComponent implements OnInit{
+export class ComposeComponent implements OnInit, OnDestroy {
   emailForm: FormGroup;
   attachments: Attachment[] = [];
   isLoading = false;
   draftId: string | null = null;
-  isCodeBlockMode = false; // New property for code block checkbox
+  isCodeBlockMode = false;
   showPreview = false;
-previewHtml = '';
+  previewHtml = '';
+
+  // Admin check properties
+  showAdminModal = false;
+  isAdmin = false;
+  private adminSubscription: Subscription | null = null;
 
   constructor(
     private fb: FormBuilder,
     private emailService: EmailService,
     private attachmentService: AttachmentService,
-    private route: ActivatedRoute
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.emailForm = this.fb.group({
       to: ['', [Validators.required, Validators.email]],
       cc: [''],
       bcc: [''],
       subject: ['', Validators.required],
-      senderName: [''], // Add sender name field
+      senderName: [''],
       html: ['', Validators.required]
     });
   }
 
   ngOnInit(): void {
+    // Check admin status first
+    this.checkAdminStatus();
+
     // Check if draft ID is provided in query params
     this.route.queryParams.subscribe(params => {
       if (params['id']) {
@@ -42,88 +54,118 @@ previewHtml = '';
       }
     });
   }
-previewEmail(): void {
-  if (this.emailForm.invalid) {
-    this.emailForm.markAllAsTouched();
-    return;
+
+  ngOnDestroy(): void {
+    if (this.adminSubscription) {
+      this.adminSubscription.unsubscribe();
+    }
   }
 
-  // Generate the HTML preview using the same logic as when sending
-  const email = this.prepareEmail();
+  private checkAdminStatus(): void {
+    this.adminSubscription = this.authService.isAdmin$.subscribe(isAdmin => {
+      this.isAdmin = isAdmin;
+      if (!isAdmin) {
+        this.showAdminModal = true;
+      }
+    });
+  }
 
-  // Format the HTML for preview
-  this.previewHtml = this.formatHtmlForPreview(email.html);
+  // Modal methods
+  closeAdminModal(): void {
+    this.showAdminModal = false;
+  }
 
-  // Show the preview modal
-  this.showPreview = true;
-}
+  redirectToSettings(): void {
+    this.router.navigate(['/settings']);
+  }
 
-closePreview(): void {
-  this.showPreview = false;
-  this.previewHtml = '';
-}
+  // Prevent form actions if not admin
+  private checkAdminAccess(): boolean {
+    if (!this.isAdmin) {
+      this.showAdminModal = true;
+      return false;
+    }
+    return true;
+  }
 
-formatHtmlForPreview(html: string): string {
-  let formattedHtml = html;
+  previewEmail(): void {
+    if (!this.checkAdminAccess()) return;
 
-  // If using code block mode, process the HTML appropriately
-  if (html) {
-    // Extract from Quill formatting if needed
-    if (html.includes('ql-code-block-container')) {
-      const matches = html.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
-      if (matches && matches[1]) {
-        formattedHtml = matches[1];
+    if (this.emailForm.invalid) {
+      this.emailForm.markAllAsTouched();
+      return;
+    }
+
+    const email = this.prepareEmail();
+    this.previewHtml = this.formatHtmlForPreview(email.html);
+    this.showPreview = true;
+  }
+
+  closePreview(): void {
+    this.showPreview = false;
+    this.previewHtml = '';
+  }
+
+  formatHtmlForPreview(html: string): string {
+    let formattedHtml = html;
+
+    if (html) {
+      if (html.includes('ql-code-block-container')) {
+        const matches = html.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
+        if (matches && matches[1]) {
+          formattedHtml = matches[1];
+        }
+
+        formattedHtml = formattedHtml
+          .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
+          .replace(/<\/div>/g, '');
       }
 
-      // Remove Quill wrappers
-      formattedHtml = formattedHtml
-        .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
-        .replace(/<\/div>/g, '');
-    }
-
-    // For code block mode, convert HTML entities if needed
-    if (formattedHtml.includes('&lt;')) {
-      formattedHtml = formattedHtml
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#039;/g, "'")
-        .replace(/&amp;/g, '&');
-    }
-  }
-  // Regular content (not code block)
-  else if (formattedHtml && !formattedHtml.startsWith('<')) {
-    formattedHtml = `<p>${formattedHtml.replace(/\n/g, '<br>')}</p>`;
-  }
-
-  return `${formattedHtml}`;
-}
-loadDraft(id: string): void {
-  this.isLoading = true;
-  this.emailService.getDrafts().subscribe({
-    next: (drafts) => {
-      const draft = drafts.find(d => d.id === id);
-      if (draft) {
-        this.draftId = id;
-        this.emailForm.patchValue({
-          to: draft.to,
-          cc: draft.cc || '',
-          bcc: draft.bcc || '',
-          subject: draft.subject,
-          senderName: draft.senderName || '', // Load sender name
-          html: draft.html
-        });
-        this.attachments = draft.attachments || [];
+      if (formattedHtml.includes('&lt;')) {
+        formattedHtml = formattedHtml
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .replace(/&amp;/g, '&');
       }
-      this.isLoading = false;
-    },
-    error: () => {
-      this.isLoading = false;
+    } else if (formattedHtml && !formattedHtml.startsWith('<')) {
+      formattedHtml = `<p>${formattedHtml.replace(/\n/g, '<br>')}</p>`;
     }
-  });
-}
+
+    return formattedHtml;
+  }
+
+  loadDraft(id: string): void {
+    if (!this.checkAdminAccess()) return;
+
+    this.isLoading = true;
+    this.emailService.getDrafts().subscribe({
+      next: (drafts) => {
+        const draft = drafts.find(d => d.id === id);
+        if (draft) {
+          this.draftId = id;
+          this.emailForm.patchValue({
+            to: draft.to,
+            cc: draft.cc || '',
+            bcc: draft.bcc || '',
+            subject: draft.subject,
+            senderName: draft.senderName || '',
+            html: draft.html
+          });
+          this.attachments = draft.attachments || [];
+        }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
+  }
 
   onFileSelected(event: Event): void {
+    if (!this.checkAdminAccess()) return;
+
     const element = event.target as HTMLInputElement;
     if (element.files && element.files.length > 0) {
       const file = element.files[0];
@@ -133,12 +175,10 @@ loadDraft(id: string): void {
         next: (attachment) => {
           this.attachments.push(attachment);
           this.isLoading = false;
-          // Reset the file input
           element.value = '';
         },
         error: () => {
           this.isLoading = false;
-          // Reset the file input
           element.value = '';
         }
       });
@@ -146,6 +186,8 @@ loadDraft(id: string): void {
   }
 
   removeAttachment(filename: string): void {
+    if (!this.checkAdminAccess()) return;
+
     this.attachmentService.deleteFile(filename).subscribe({
       next: () => {
         this.attachments = this.attachments.filter(a => a.filename !== filename);
@@ -154,6 +196,8 @@ loadDraft(id: string): void {
   }
 
   onSaveDraft(): void {
+    if (!this.checkAdminAccess()) return;
+
     if (this.emailForm.invalid) {
       this.emailForm.markAllAsTouched();
       return;
@@ -180,6 +224,8 @@ loadDraft(id: string): void {
   }
 
   onSendEmail(): void {
+    if (!this.checkAdminAccess()) return;
+
     if (this.emailForm.invalid) {
       this.emailForm.markAllAsTouched();
       return;
@@ -190,7 +236,6 @@ loadDraft(id: string): void {
 
     this.emailService.sendEmail(email).subscribe({
       next: () => {
-        // Clear form after successful send
         this.resetForm();
         this.isLoading = false;
       },
@@ -207,49 +252,37 @@ loadDraft(id: string): void {
     this.isCodeBlockMode = false;
   }
 
+  prepareEmail(): Draft {
+    const email = {
+      to: this.emailForm.get('to')?.value,
+      cc: this.emailForm.get('cc')?.value,
+      bcc: this.emailForm.get('bcc')?.value,
+      subject: this.emailForm.get('subject')?.value,
+      senderName: this.emailForm.get('senderName')?.value,
+      html: this.emailForm.get('html')?.value,
+      attachments: this.attachments,
+      id: this.draftId || undefined
+    };
 
+    if (this.isCodeBlockMode && email.html) {
+      let htmlContent = email.html;
 
-prepareEmail(): Draft {
-  const email = {
-    to: this.emailForm.get('to')?.value,
-    cc: this.emailForm.get('cc')?.value,
-    bcc: this.emailForm.get('bcc')?.value,
-    subject: this.emailForm.get('subject')?.value,
-    senderName: this.emailForm.get('senderName')?.value, // Include sender name
-    html: this.emailForm.get('html')?.value,
-    attachments: this.attachments,
-    id: this.draftId || undefined
-  };
-
-  // Handle code block formatting if mode is enabled
-  if (this.isCodeBlockMode && email.html) {
-    // For code block mode, we need to extract the HTML from any Quill formatting
-    let htmlContent = email.html;
-
-    // Check if content is wrapped in Quill code block container
-    if (htmlContent.includes('ql-code-block-container')) {
-      // Extract the actual code from the Quill container
-      const matches = htmlContent.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
-      if (matches && matches[1]) {
-        // Use the extracted content directly (do not escape it)
-        htmlContent = matches[1];
+      if (htmlContent.includes('ql-code-block-container')) {
+        const matches = htmlContent.match(/<div class="ql-code-block">([\s\S]*?)<\/div>/);
+        if (matches && matches[1]) {
+          htmlContent = matches[1];
+        }
       }
+
+      htmlContent = htmlContent
+        .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
+        .replace(/<\/div>/g, '');
+
+      email.html = htmlContent;
+    } else if (email.html && !email.html.startsWith('<')) {
+      email.html = `<p>${email.html.replace(/\n/g, '<br>')}</p>`;
     }
 
-    // Remove any additional Quill-specific wrappers if present
-    htmlContent = htmlContent
-      .replace(/<div class="ql-code-block-container"[^>]*>/g, '')
-      .replace(/<\/div>/g, '');
-
-    // Set the extracted HTML directly (no escaping)
-    email.html = htmlContent;
+    return email;
   }
-  // Regular content (not code block mode)
-  else if (email.html && !email.html.startsWith('<')) {
-    // If content doesn't start with HTML tag, wrap it in paragraph tags
-    email.html = `<p>${email.html.replace(/\n/g, '<br>')}</p>`;
-  }
-
-  return email;
-}
 }

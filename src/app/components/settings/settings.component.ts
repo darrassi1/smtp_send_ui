@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { SmtpConfigService } from '../../services/smtp-config.service';
 import { ToastService } from '../../services/toast.service';
@@ -19,7 +20,8 @@ export class SettingsComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private smtpConfigService: SmtpConfigService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router // Add Router injection
   ) {
     this.smtpForm = this.fb.group({
       host: ['', Validators.required],
@@ -70,12 +72,19 @@ export class SettingsComponent implements OnInit {
       next: () => {
         this.toastService.show('SMTP configuration saved successfully', 'success');
         this.isLoading = false;
+
+        // Redirect to compose route after successful save
+        setTimeout(() => {
+          this.router.navigate(['/compose']);
+        }, 1500); // Wait 1.5 seconds to let user see the success toast
       },
       error: () => {
         this.isLoading = false;
       }
     });
   }
+
+
 
   testConnection(): void {
     if (this.smtpForm.invalid) {
