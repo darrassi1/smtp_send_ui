@@ -1,32 +1,80 @@
-<nav class="bg-primary-700 shadow-md">
+<nav class="fixed w-full z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-lg"
+     style="background-image: url('https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?auto=format&fit=crop&w=1950&q=80');
+            background-size: cover; background-position: center;">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between h-16">
-      <div class="flex">
-        <div class="flex-shrink-0 flex items-center">
-          <span class="text-white font-bold text-xl">Gmail HTML Sender</span>
-        </div>
-        <div class="ml-6 flex items-center space-x-4">
-          <a routerLink="/compose" routerLinkActive="text-white bg-primary-800"
-             class="text-primary-100 hover:bg-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-            Compose
-          </a>
-          <a routerLink="/drafts" routerLinkActive="text-white bg-primary-800"
-             class="text-primary-100 hover:bg-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-            Drafts
-          </a>
-          <a routerLink="/settings" routerLinkActive="text-white bg-primary-800"
-             class="text-primary-100 hover:bg-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-            Settings
-          </a>
-        </div>
-      </div>
+
+      <!-- Logo / Title -->
       <div class="flex items-center">
-        <div *ngIf="isAdmin$ | async" class="flex items-center">
-          <span class="text-primary-100 text-sm mr-2">Admin</span>
-          <button (click)="logout()" class="text-primary-100 hover:text-white text-sm font-medium">
+        <span class="px-3 py-1 rounded-lg bg-gradient-to-r from-primary-600 to-primary-700 border border-primary-300 text-white font-extrabold text-lg sm:text-xl tracking-tight shadow-lg">
+          ✉️Email Sender
+        </span>
+      </div>
+
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex items-center space-x-3 ml-6">
+        <a routerLink="/compose" routerLinkActive="bg-primary-700 text-white"
+           class="px-4 py-2 rounded-lg border border-primary-400 bg-primary-600 text-sm font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+          Compose
+        </a>
+        <a routerLink="/drafts" routerLinkActive="bg-primary-700 text-white"
+           class="px-4 py-2 rounded-lg border border-primary-400 bg-primary-600 text-sm font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+          Drafts
+        </a>
+        <a routerLink="/settings" routerLinkActive="bg-primary-700 text-white"
+           class="px-4 py-2 rounded-lg border border-primary-400 bg-primary-600 text-sm font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+          Settings
+        </a>
+      </div>
+
+      <!-- Right Side -->
+      <div class="flex items-center space-x-3">
+        <div *ngIf="isAdmin$ | async" class="hidden sm:flex items-center space-x-2">
+          <span class="text-white/90 text-xs sm:text-sm">Admin</span>
+          <button (click)="logout()"
+                  class="px-3 py-2 rounded-lg border border-red-400 bg-gradient-to-r from-red-600 to-red-700 text-white text-xs sm:text-sm font-semibold hover:from-red-700 hover:to-red-800 hover:shadow-xl hover:scale-105 transition-all duration-200">
             Logout
           </button>
         </div>
+
+        <!-- Mobile Menu Button -->
+        <button type="button"
+                (click)="toggleMobileMenu()"
+                class="md:hidden inline-flex items-center justify-center p-2 rounded-md border border-primary-300 bg-primary-600 text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/40 transition-all duration-200"
+                aria-controls="mobile-menu"
+                [attr.aria-expanded]="mobileMenuOpen">
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  [attr.d]="mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div *ngIf="mobileMenuOpen" id="mobile-menu"
+       class="md:hidden animate-slideDown origin-top">
+    <div class="px-2 pt-2 pb-3 space-y-2 backdrop-blur-md bg-white/10 rounded-lg shadow-xl border border-white/20 mt-2 mx-2">
+      <a (click)="closeMobileMenu()" routerLink="/compose" routerLinkActive="bg-primary-700 text-white"
+         class="block px-3 py-2 rounded-md border border-primary-400 bg-primary-600 text-base font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+        Compose
+      </a>
+      <a (click)="closeMobileMenu()" routerLink="/drafts" routerLinkActive="bg-primary-700 text-white"
+         class="block px-3 py-2 rounded-md border border-primary-400 bg-primary-600 text-base font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+        Drafts
+      </a>
+      <a (click)="closeMobileMenu()" routerLink="/settings" routerLinkActive="bg-primary-700 text-white"
+         class="block px-3 py-2 rounded-md border border-primary-400 bg-primary-600 text-base font-semibold text-white hover:bg-primary-700 hover:border-primary-500 hover:shadow-xl hover:scale-105 transition-all duration-200">
+        Settings
+      </a>
+      <div *ngIf="isAdmin$ | async" class="border-t border-white/20 mt-2 pt-2">
+        <span class="block text-white/80 text-sm mb-1">Admin</span>
+        <button (click)="logout(); closeMobileMenu()"
+                class="w-full text-left px-3 py-2 rounded-md border border-red-400 bg-gradient-to-r from-red-600 to-red-700 text-white text-sm font-semibold hover:from-red-700 hover:to-red-800 hover:shadow-xl hover:scale-105 transition-all duration-200">
+          Logout
+        </button>
       </div>
     </div>
   </div>
