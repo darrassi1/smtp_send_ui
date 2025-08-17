@@ -36,10 +36,16 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Only load SMTP config if user is already authenticated
+  if (this.authService.canMakeAuthenticatedRequest()) {
     this.loadSmtpConfig();
+  }
   }
 
   loadSmtpConfig(): void {
+    if (!this.authService.canMakeAuthenticatedRequest()) {
+    return; // Don't make the request if not authenticated
+    }
     this.isLoading = true;
     this.smtpConfigService.getConfig().subscribe({
       next: (config) => {
@@ -110,3 +116,4 @@ export class SettingsComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 }
+
