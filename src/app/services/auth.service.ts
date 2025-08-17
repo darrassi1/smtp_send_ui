@@ -26,7 +26,9 @@ export class AuthService {
     sessionStorage.removeItem('admin_credentials');
     this.isAdminSubject.next(false);
   }
-
+canMakeAuthenticatedRequest(): boolean {
+  return !!this.getAuthHeader();
+}
   getAuthHeader(): string | null {
     const credentials = sessionStorage.getItem('admin_credentials');
     return credentials ? `Basic ${credentials}` : null;
@@ -36,3 +38,4 @@ export class AuthService {
     return !!sessionStorage.getItem('admin_credentials');
   }
 }
+
