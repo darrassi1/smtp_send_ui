@@ -16,6 +16,7 @@ import { AdminLoginComponent } from './components/admin-login/admin-login.compon
 import { ToastComponent } from './components/toast/toast.component';
 import { HtmlEditorComponent } from './components/html-editor/html-editor.component';
 import { AuthInterceptor } from './services/auth.interceptor';
+import { EmailScrapingComponent } from './components/email-scraping/email-scraping.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { AuthInterceptor } from './services/auth.interceptor';
     AdminLoginComponent,
     ToastComponent,
     HtmlPreviewModalComponent,
-    HtmlEditorComponent
+    HtmlEditorComponent,
+    EmailScrapingComponent
   ],
   imports: [
     BrowserModule,
